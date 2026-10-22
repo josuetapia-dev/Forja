@@ -3,9 +3,14 @@
  *
  * Estrategia "stale-while-revalidate": responde al instante con lo guardado y,
  * por detrás, descarga la versión nueva para la próxima vez que abras la app.
- * Al publicar cambios grandes, sube el número de CACHE para limpiar lo viejo.
+ * Al publicar cambios, sube el número de CACHE: el service worker nuevo baja
+ * todo de nuevo y la app se recarga sola con la versión nueva (ver app.js).
+ *
+ * Importante: las descargas piden cache 'reload'/'no-cache' para saltarse la
+ * caché HTTP del navegador (GitHub Pages la deja 10 minutos). Sin eso, una
+ * versión nueva podía quedarse con archivos viejos mezclados.
  */
-const CACHE = 'forja-v2';
+const CACHE = 'forja-v3';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -73,7 +78,8 @@ const ARCHIVOS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARCHIVOS)).then(() => self.skipWaiting()));
+  const frescos = ARCHIVOS.map((ruta) => new Request(ruta, { cache: 'reload' }));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(frescos)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -87,7 +93,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const peticion = e.request;
   if (peticion.method !== 'GET' || new URL(peticion.url).origin !== location.origin) return;
-  const deRed = fetch(peticion).then(async (respuesta) => {
+  const deRed = fetch(peticion, { cache: 'no-cache' }).then(async (respuesta) => {
     if (respuesta.ok) {
       const cache = await caches.open(CACHE);
       await cache.put(peticion, respuesta.clone());
@@ -95,8 +101,10 @@ self.addEventListener('fetch', (e) => {
     return respuesta;
   });
   e.waitUntil(deRed.catch(() => {}));
+  // Solo se busca en la caché de esta versión, nunca en las viejas.
   e.respondWith(
-    caches.match(peticion, { ignoreSearch: true }).then((guardada) =>
-      guardada || deRed.catch(() => (peticion.mode === 'navigate' ? caches.match('./') : Response.error()))),
+    caches.open(CACHE)
+      .then((cache) => cache.match(peticion, { ignoreSearch: true }))
+      .then((guardada) => guardada || deRed.catch(() => (peticion.mode === 'navigate' ? caches.match('./') : Response.error()))),
   );
 });

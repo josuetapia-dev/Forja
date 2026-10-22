@@ -47,6 +47,15 @@ function iniciar() {
 
   navigator.storage?.persist?.();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    // Cuando llega una versión nueva y toma el control, se recarga una vez para
+    // mostrarla de inmediato (y no hasta la siguiente vez que abras la app).
+    const habiaVersion = Boolean(navigator.serviceWorker.controller);
+    let recargando = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!habiaVersion || recargando) return;
+      recargando = true;
+      location.reload();
+    });
     navigator.serviceWorker.register('sw.js').catch((e) => console.warn('Sin modo sin conexión:', e.message));
   }
 }

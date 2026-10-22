@@ -73,8 +73,9 @@ Igual que Finax:
 
 ### Publicar cambios
 
-Sube el número de `CACHE` en [sw.js](sw.js) (`forja-v1` → `forja-v2`) y haz push.
-El cambio se ve la segunda vez que abres la app.
+Sube el número de `CACHE` en [sw.js](sw.js) (por ejemplo `forja-v3` → `forja-v4`) y haz push.
+Al abrir la app, el service worker nuevo baja todo saltándose la caché del navegador y la app se recarga sola
+una vez con la versión nueva. Si no tienes señal en ese momento, sigues usando la versión anterior hasta que la haya.
 
 ## Estructura
 
