@@ -105,5 +105,17 @@ export const REGLAS = [
   'Si aparece dolor agudo o una molestia que empeora, detente y valora la causa antes de seguir.',
 ];
 
+/**
+ * Fotos de técnica (inicio y final del movimiento), de free-exercise-db
+ * (github.com/yuhonas/free-exercise-db, dominio público). Están en
+ * img/ejercicios/<id>-0.jpg y -1.jpg; aquí solo van los que reutilizan
+ * las fotos de otro ejercicio.
+ */
+const FOTO_COMPARTIDA = { 'jalon-polea': 'jalon-polea-alta' };
+export const fotos = (id) => {
+  const base = `img/ejercicios/${FOTO_COMPARTIDA[id] ?? id}`;
+  return [`${base}-0.jpg`, `${base}-1.jpg`];
+};
+
 /** "4 × 8–10" o "3 × 15". */
 export const repsTexto = (e) => `${e.series} × ${e.min === e.max ? e.min : `${e.min}–${e.max}`}`;

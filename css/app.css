@@ -44,6 +44,7 @@
     --negativo: #ff7b7b;
     --sombra: 0 10px 30px rgba(0, 0, 0, 0.45);
     --vidrio: rgba(23, 27, 35, 0.74);
+    --foto-filtro: brightness(0.82) contrast(1.05);
   }
 }
 :root[data-theme="dark"] {
@@ -62,6 +63,7 @@
   --negativo: #ff7b7b;
   --sombra: 0 10px 30px rgba(0, 0, 0, 0.45);
   --vidrio: rgba(23, 27, 35, 0.74);
+    --foto-filtro: brightness(0.82) contrast(1.05);
 }
 
 * { box-sizing: border-box; }
@@ -170,7 +172,21 @@ ul { margin: 0; padding: 0; list-style: none; }
 .ej-cuenta { color: var(--tinta-3); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .ej-cuerpo { padding: 0 16px 16px; }
-.ej-ultima { font-size: 14px; color: var(--tinta-2); padding: 12px 0; border-top: 1px solid var(--linea); }
+.ej-ref { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--linea); }
+.ej-ultima { font-size: 14px; color: var(--tinta-2); }
+
+/* Animación de técnica: la foto final aparece y desaparece sobre la inicial. */
+.demo { display: block; border-radius: 12px; overflow: hidden; }
+.demo.mini { flex: none; width: 108px; box-shadow: inset 0 0 0 1px var(--linea); }
+.demo.grande { border-radius: 16px; margin-bottom: 10px; }
+.demo-cuadros { position: relative; display: block; aspect-ratio: 3 / 2; background: var(--panel-2); }
+.demo-cuadros img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: var(--foto-filtro, none); }
+.demo-cuadros img + img { opacity: 0; animation: alternar 2.6s ease-in-out infinite; }
+@keyframes alternar { 0%, 30% { opacity: 0; } 50%, 80% { opacity: 1; } 100% { opacity: 0; } }
+.demo-pasos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.demo-pasos figure { margin: 0; }
+.demo-pasos img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 12px; filter: var(--foto-filtro, none); }
+.demo-pasos figcaption { color: var(--tinta-2); font-size: 13px; text-align: center; padding-top: 4px; }
 .ej-ultima strong { color: var(--tinta); font-weight: 600; }
 .pista {
   display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; padding: 10px 12px;
@@ -371,4 +387,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+  /* Excepción: la técnica del ejercicio es contenido, y es solo un fundido (sin desplazamiento). Más lento. */
+  .demo-cuadros img + img { animation: alternar 4s ease-in-out infinite !important; }
 }

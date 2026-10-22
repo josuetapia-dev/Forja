@@ -8,7 +8,7 @@ los datos viven **solo en tu iPhone**.
 
 La rutina viene del PDF del coach: *Rutina Josué — Marcación + Hipertrofia* (lunes a viernes).
 
-## Qué hace (versión 1.0)
+## Qué hace (versión 1.1)
 
 | Pantalla | Qué ves |
 |---|---|
@@ -20,6 +20,7 @@ La rutina viene del PDF del coach: *Rutina Josué — Marcación + Hipertrofia* 
 ### Cómo se usa en el gym
 
 1. Abre Forja: ya está en la rutina del día y el primer ejercicio abierto.
+   La miniatura animada muestra el movimiento; tócala para verlo en grande con la posición inicial y la final.
 2. Escribe los kilos y las repeticiones de la serie y toca ✓.
    Las siguientes series ya vienen sugeridas (en gris) con lo mismo: si repites, solo tocas ✓.
 3. Arranca el **descanso**: 2:00 en compuestos y 1:00 en aislamientos (ajustable). Puedes sumar 15 s o saltarlo.
@@ -89,6 +90,7 @@ js/calculos.js        La vez pasada, cuándo subir peso, récords, volumen, día
 js/graficas.js        Gráficas en SVG hechas a mano
 js/formato.js         Fechas, kilos y tiempos en español
 js/iconos.js          Íconos de línea en SVG
+img/ejercicios/       Fotos de técnica: <id>-0.jpg (inicio) y <id>-1.jpg (final), 480 px, escala de grises
 icons/                Ícono de la app (180, 192 y 512 px)
 pruebas/              Pruebas de los cálculos con node:test
 servidor.mjs          Servidor local para desarrollo (puerto 5174)
@@ -103,6 +105,13 @@ servidor.mjs          Servidor local para desarrollo (puerto 5174)
   y "Curl de bíceps". Si en realidad son el mismo, se juntan cambiando el id en `js/rutina.js`.
 - **El descanso guarda la hora en que termina**, no un contador: si sales a WhatsApp y vuelves, el tiempo es correcto.
 - **El pitido usa Web Audio**: en el iPhone no suena con el interruptor de silencio activado.
+- **Fotos de técnica** de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (licencia Unlicense,
+  dominio público). La "animación" son dos fotos encimadas: la final aparece y desaparece con CSS. Se redujeron a
+  480 px y se pasaron a escala de grises (48 fotos, ~1 MB) y el service worker las guarda para usarlas sin internet.
+  En modo oscuro se atenúan un poco. Con "Reducir movimiento" activado siguen animándose (solo es un fundido), más lento.
+  Versiones elegidas donde el PDF no especifica: extensión de tríceps por encima de la cabeza **con mancuerna**,
+  curl de bíceps del viernes **con mancuernas**, pantorrillas **de pie**; los dos jalones usan las mismas fotos
+  (Wide-Grip Lat Pulldown). Para cambiar una, reemplaza sus dos fotos en `img/ejercicios/`.
 - **El peso corporal no se pinta como bueno o malo**: para marcar, bajar suele ser la meta, pero depende de ti y de tu coach.
 
 ## Ideas para siguientes versiones

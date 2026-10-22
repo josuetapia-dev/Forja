@@ -70,3 +70,11 @@ test('días entrenados en la semana', () => {
   ]);
   assert.deepEqual([...calc.diasEntrenados(est, '2026-10-19')].sort(), [1, 3]);
 });
+
+test('cada ejercicio tiene sus dos fotos de técnica', async () => {
+  const { existsSync } = await import('node:fs');
+  const { fotos } = await import('../js/rutina.js');
+  for (const id of Object.keys(EJERCICIOS)) {
+    for (const ruta of fotos(id)) assert.ok(existsSync(new URL(`../${ruta}`, import.meta.url)), `falta ${ruta}`);
+  }
+});

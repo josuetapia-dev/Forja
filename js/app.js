@@ -9,7 +9,7 @@ import * as db from './datos.js';
 import * as calc from './calculos.js';
 import * as f from './formato.js';
 import * as g from './graficas.js';
-import { DIAS, EJERCICIOS, CALENTAMIENTO, VUELTA_A_LA_CALMA, REGLAS, repsTexto } from './rutina.js';
+import { DIAS, EJERCICIOS, CALENTAMIENTO, VUELTA_A_LA_CALMA, REGLAS, repsTexto, fotos } from './rutina.js';
 import { icono } from './iconos.js';
 
 // dia: rutina elegida a mano desde Semana (null = la de hoy).
@@ -109,6 +109,7 @@ function alTocar(e) {
     }
     case 'volver-hoy': ui.dia = null; ui.abierto = undefined; return render();
     case 'ver-ej': return hojaEjercicio(id);
+    case 'tecnica': return hojaTecnica(id);
     case 'peso': return hojaPeso();
     case 'ajustes': return hojaAjustes();
     case 'descanso-mas': return sumarDescanso(15);
@@ -252,12 +253,37 @@ function cuerpoEjercicio(e, info, sesion) {
     </div>`;
   }).join('');
   return `<div class="ej-cuerpo">
-    <p class="ej-ultima">${ultima ? `La vez pasada (${f.etiquetaFecha(ultima.fecha).toLowerCase()}): <strong>${textoSeries(ultima.series)}</strong>` : 'Primera vez: anota el peso con el que trabajes.'}</p>
+    <div class="ej-ref">
+      <button class="demo mini" data-accion="tecnica" data-id="${e.id}" aria-label="Ver la técnica de ${info.nombre}">${demo(e.id)}</button>
+      <p class="ej-ultima">${ultima ? `La vez pasada (${f.etiquetaFecha(ultima.fecha).toLowerCase()}): <strong>${textoSeries(ultima.series)}</strong>` : 'Primera vez: anota el peso con el que trabajes.'}</p>
+    </div>
     ${calc.tocaSubir(ultima, e) ? `<p class="pista">${icono('subir', 16)}<span>La vez pasada llegaste a ${e.max} repeticiones en todas las series. Sube un poco el peso hoy.</span></p>` : ''}
     <div class="series-cab"><span>Serie</span><span>Kg</span><span>Reps</span><span></span></div>
     ${filas}
     <p class="ej-pie">${icono('reloj', 15)}${info.tipo === 'compuesto' ? 'Compuesto' : 'Aislamiento'}: descanso de ${f.reloj(descanso)} al marcar cada serie.</p>
   </div>`;
+}
+
+/**
+ * "Animación" del ejercicio: dos fotos (inicio y final) encimadas; la de
+ * encima aparece y desaparece en bucle con CSS. Pesa casi nada y funciona sin internet.
+ */
+function demo(id) {
+  const [inicio, final] = fotos(id);
+  return `<span class="demo-cuadros"><img src="${inicio}" alt="" decoding="async"><img src="${final}" alt="" decoding="async"></span>`;
+}
+
+function hojaTecnica(id) {
+  const [inicio, final] = fotos(id);
+  abrirHoja(`
+    <div class="hoja-cab"><span></span><h2>${EJERCICIOS[id].nombre}</h2><button class="texto-btn listo" data-cerrar>Listo</button></div>
+    <div class="demo grande" role="img" aria-label="Movimiento de ${EJERCICIOS[id].nombre}">${demo(id)}</div>
+    <div class="demo-pasos">
+      <figure><img src="${inicio}" alt="Posición inicial"><figcaption>Inicio</figcaption></figure>
+      <figure><img src="${final}" alt="Posición final"><figcaption>Final</figcaption></figure>
+    </div>
+    <p class="ajustes-nota">Fotos de referencia de free-exercise-db (dominio público). La máquina de tu gym puede verse distinta; si tu coach te corrige la técnica, manda lo que él te diga.</p>
+  `);
 }
 
 function marcarSerie(boton) {
@@ -558,7 +584,7 @@ function hojaAjustes() {
     </div>
     <p class="ajustes-nota">Tus datos viven solo en este iPhone. Guarda un respaldo de vez en cuando en Archivos o en iCloud Drive.</p>
     <button class="btn-texto peligro borrar">Borrar todos los datos</button>
-    <p class="ajustes-nota centrado">Forja 1.0</p>
+    <p class="ajustes-nota centrado">Forja 1.1</p>
   `);
   const $ = (s) => hoja.querySelector(s);
   hoja.addEventListener('click', (e) => {
