@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Forja</title>
+  <meta name="description" content="Tu rutina del gym: series, descansos y progreso.">
+
+  <!-- Al agregarla a la pantalla de inicio abre como app, sin la barra de Safari. -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Forja">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#F1F2F5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1117" media="(prefers-color-scheme: dark)">
+  <meta name="format-detection" content="telephone=no">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <main id="vista" class="vista" tabindex="-1"></main>
+
+  <!-- Cronómetro de descanso: aparece al marcar una serie. -->
+  <div id="descanso" class="descanso" role="timer" aria-live="off"></div>
+
+  <nav class="dock" aria-label="Secciones">
+    <div class="pestanas">
+      <button class="pestana" data-tab="hoy" aria-label="Hoy"></button>
+      <button class="pestana" data-tab="semana" aria-label="Semana"></button>
+      <button class="pestana" data-tab="progreso" aria-label="Progreso"></button>
+    </div>
+  </nav>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+  <div id="tip" class="tip" role="tooltip"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
