@@ -4,6 +4,8 @@
  * Es fija: viene del PDF tal cual. Cada ejercicio tiene un id; si el mismo
  * ejercicio aparece en dos días (por ejemplo, Prensa el martes y el jueves),
  * comparte el id para que "la vez pasada" y el progreso junten ambos días.
+ * Agregados a la rutina del PDF (más brazo y hombro posterior): curl inclinado el
+ * miércoles; Pec Deck invertido y extensión de tríceps sobre la cabeza el viernes.
  * Los ejercicios que ya no están en la rutina (curl predicador, el jalón del
  * viernes de la rutina anterior) se quedan en EJERCICIOS para no perder su historial.
  */
@@ -17,6 +19,7 @@ export const EJERCICIOS = {
   'press-inclinado-mancuernas': { nombre: 'Press inclinado con mancuernas', tipo: 'compuesto' },
   'press-inclinado-barra': { nombre: 'Press inclinado con barra', tipo: 'compuesto' },
   'pec-deck': { nombre: 'Pec Deck', tipo: 'aislamiento', placas: true },
+  'pec-deck-invertido': { nombre: 'Pec Deck invertido', tipo: 'aislamiento', placas: true },
   'press-hombro-mancuernas': { nombre: 'Press de hombro con mancuernas', tipo: 'compuesto' },
   'elevaciones-laterales': { nombre: 'Elevaciones laterales', tipo: 'aislamiento' },
   'triceps-polea': { nombre: 'Tríceps en polea', tipo: 'aislamiento', placas: true },
@@ -36,6 +39,7 @@ export const EJERCICIOS = {
   'face-pull': { nombre: 'Face pull en polea', tipo: 'aislamiento', placas: true },
   'curl-barra': { nombre: 'Curl de bíceps con barra', tipo: 'aislamiento' },
   'curl-biceps': { nombre: 'Curl de bíceps', tipo: 'aislamiento' },
+  'curl-inclinado': { nombre: 'Curl inclinado con mancuernas', tipo: 'aislamiento' },
   'curl-predicador': { nombre: 'Curl en banco predicador', tipo: 'aislamiento' },
   'curl-martillo': { nombre: 'Curl martillo', tipo: 'aislamiento' },
 };
@@ -76,6 +80,7 @@ export const DIAS = {
       ej('remo-mancuerna', 2, 10, 10, { nota: 'Por lado', clave: 'Tracción concentrada.' }),
       ej('face-pull', 3, 12, 15, { clave: 'Enfoque en deltoides posterior y salud del hombro.' }),
       ej('curl-barra', 3, 8, 10, { clave: 'Controla la fase excéntrica (la bajada).' }),
+      ej('curl-inclinado', 3, 10, 12, { nota: 'Agregado', clave: 'Banco a 45–60°, brazos colgando detrás del cuerpo: estira mucho el bíceps. Sin balancear los hombros.' }),
       ej('curl-martillo', 3, 12, 12, { clave: 'Desarrollo del braquiorradial y grosor del brazo.' }),
     ],
   },
@@ -95,8 +100,10 @@ export const DIAS = {
       ej('press-inclinado-barra', 3, 8, 10, { clave: 'Estímulo potente al pectoral superior.' }),
       ej('remo-polea', 3, 10, 12, { clave: 'Densidad de espalda.' }),
       ej('pec-deck', 2, 12, 15, { clave: 'Aislamiento pectoral.' }),
+      ej('pec-deck-invertido', 3, 12, 15, { nota: 'Agregado', clave: 'Hombro posterior: da forma redonda al hombro visto de lado y ayuda a la postura. Abre los brazos sin encoger los hombros.' }),
       ej('curl-biceps', 3, 10, 12, { clave: 'Bombeo final de brazos.' }),
       ej('triceps-polea', 3, 10, 12),
+      ej('extension-triceps-cabeza', 2, 12, 15, { nota: 'Agregado', clave: 'Segundo día para la cabeza larga del tríceps, la que más volumen da al brazo.' }),
     ],
   },
 };

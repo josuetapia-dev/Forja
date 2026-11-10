@@ -14,7 +14,7 @@ const estado = (sesiones) => ({ sesiones, pesos: [], ajustes: {} });
 const banca = { series: 4, min: 8, max: 10 }; // como el press de banca de la rutina anterior
 
 test('la rutina del PDF (silueta en V) está completa', () => {
-  assert.deepEqual(Object.values(DIAS).map((d) => d.ejercicios.length), [7, 7, 7, 7, 7]);
+  assert.deepEqual(Object.values(DIAS).map((d) => d.ejercicios.length), [7, 7, 8, 7, 9]); // con los agregados del miércoles y el viernes
   for (const d of Object.values(DIAS)) for (const e of d.ejercicios) assert.ok(EJERCICIOS[e.id], `falta ${e.id}`);
   // Silueta en V: el lunes empieza con elevaciones laterales y el press de banca baja a 3 series.
   assert.equal(DIAS[1].ejercicios[0].id, 'elevaciones-laterales');

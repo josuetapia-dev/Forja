@@ -111,11 +111,15 @@ servidor.mjs          Servidor local para desarrollo (puerto 5174)
 - **Rutina en V (versión 1.2)**: los ejercicios que salieron (curl en banco predicador y el "Jalón en polea" del
   viernes anterior) siguen en `EJERCICIOS` para que su historial se vea en Progreso. El calentamiento y la vuelta
   a la calma se quedaron de la rutina anterior, porque el PDF nuevo no los cambia.
+- **Agregados a la rutina del PDF** (marcados "Agregado" en la app), para más brazo y hombro posterior:
+  curl inclinado con mancuernas 3×10–12 el miércoles; Pec Deck invertido 3×12–15 y extensión de tríceps
+  sobre la cabeza 2×12–15 el viernes. Por semana quedan 12 series directas de bíceps, 10 de tríceps,
+  12 de hombro lateral y 6 de hombro posterior. Fotos: Incline Dumbbell Curl y Reverse Machine Flyes.
 - **El descanso guarda la hora en que termina**, no un contador: si sales a WhatsApp y vuelves, el tiempo es correcto.
 - **El pitido usa Web Audio**: en el iPhone no suena con el interruptor de silencio activado.
 - **Fotos de técnica** de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (licencia Unlicense,
   dominio público). La "animación" son dos fotos encimadas: la final aparece y desaparece con CSS. Se redujeron a
-  480 px y se pasaron a escala de grises (48 fotos, ~1 MB) y el service worker las guarda para usarlas sin internet.
+  480 px y se pasaron a escala de grises (52 fotos, ~1 MB) y el service worker las guarda para usarlas sin internet.
   En modo oscuro se atenúan un poco. Con "Reducir movimiento" activado siguen animándose (solo es un fundido), más lento.
   Versiones elegidas donde el PDF no especifica: extensión de tríceps por encima de la cabeza **con mancuerna**,
   curl de bíceps del viernes **con mancuernas**, pantorrillas **de pie**; los dos jalones usan las mismas fotos
