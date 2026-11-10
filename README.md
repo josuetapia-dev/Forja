@@ -112,9 +112,9 @@ servidor.mjs          Servidor local para desarrollo (puerto 5174)
   viernes anterior) siguen en `EJERCICIOS` para que su historial se vea en Progreso. El calentamiento y la vuelta
   a la calma se quedaron de la rutina anterior, porque el PDF nuevo no los cambia.
 - **Agregados a la rutina del PDF** (marcados "Agregado" en la app), para más brazo y hombro posterior:
-  curl inclinado con mancuernas 3×10–12 el miércoles; Pec Deck invertido 3×12–15 y extensión de tríceps
+  curl inclinado con mancuernas 3×10–12 el miércoles; pájaros con mancuernas (sentado, inclinado al frente) 3×12–15 y extensión de tríceps
   sobre la cabeza 2×12–15 el viernes. Por semana quedan 12 series directas de bíceps, 10 de tríceps,
-  12 de hombro lateral y 6 de hombro posterior. Fotos: Incline Dumbbell Curl y Reverse Machine Flyes.
+  12 de hombro lateral y 6 de hombro posterior. Fotos: Incline Dumbbell Curl y Seated Bent-Over Rear Delt Raise.
 - **El descanso guarda la hora en que termina**, no un contador: si sales a WhatsApp y vuelves, el tiempo es correcto.
 - **El pitido usa Web Audio**: en el iPhone no suena con el interruptor de silencio activado.
 - **Fotos de técnica** de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (licencia Unlicense,

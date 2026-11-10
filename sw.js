@@ -10,7 +10,7 @@
  * caché HTTP del navegador (GitHub Pages la deja 10 minutos). Sin eso, una
  * versión nueva podía quedarse con archivos viejos mezclados.
  */
-const CACHE = 'forja-v5';
+const CACHE = 'forja-v6';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -55,11 +55,11 @@ const ARCHIVOS = [
   'img/ejercicios/hip-thrust-1.jpg',
   'img/ejercicios/jalon-polea-alta-0.jpg',
   'img/ejercicios/jalon-polea-alta-1.jpg',
+  'img/ejercicios/pajaros-mancuernas-0.jpg',
+  'img/ejercicios/pajaros-mancuernas-1.jpg',
   'img/ejercicios/pantorrillas-0.jpg',
   'img/ejercicios/pantorrillas-1.jpg',
   'img/ejercicios/pec-deck-0.jpg',
-  'img/ejercicios/pec-deck-invertido-0.jpg',
-  'img/ejercicios/pec-deck-invertido-1.jpg',
   'img/ejercicios/pec-deck-1.jpg',
   'img/ejercicios/prensa-0.jpg',
   'img/ejercicios/prensa-1.jpg',
