@@ -10,7 +10,7 @@
  * caché HTTP del navegador (GitHub Pages la deja 10 minutos). Sin eso, una
  * versión nueva podía quedarse con archivos viejos mezclados.
  */
-const CACHE = 'forja-v3';
+const CACHE = 'forja-v4';
 const ARCHIVOS = [
   './',
   'index.html',

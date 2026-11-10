@@ -19,6 +19,26 @@ const $vista = document.getElementById('vista');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const hechasDe = (sesion, id) => (sesion?.series[id] ?? []).filter((s) => s?.hecha).length;
 
+/* ---------- Kilos, libras y placas ---------- */
+
+/** Unidad para pesos (kg o lb), elegida en Ajustes. */
+const unidad = () => db.estado().ajustes.unidad;
+/** Peso guardado en kilos → texto en la unidad elegida. */
+const pesoTxt = (kilos) => f.peso(kilos, unidad());
+/** Cómo se anota este ejercicio: 'kg', 'lb' o 'placas' (las poleas, por defecto en placas). */
+const modoDe = (id) => db.estado().ajustes.cargas?.[id] ?? (EJERCICIOS[id].placas ? 'placas' : unidad());
+/** Carga de una serie como texto: "5 placas" o "60 lb". */
+const cargaTxt = (s, modo) => (s.placas != null ? f.placas(s.placas) : s.kg != null ? f.peso(s.kg, modo === 'placas' ? unidad() : modo) : '–');
+/** Lo que se escribe en el campo de carga para una serie, en el modo del ejercicio (null si es de otro tipo). */
+const cargaCampo = (s, modo) => (modo === 'placas' ? s?.placas ?? null : s?.placas != null ? null : f.desdeKg(s?.kg, modo));
+/** Número escrito → cambios a guardar en la serie. */
+const cambiosCarga = (valor, modo) => (modo === 'placas' ? { placas: valor, kg: null } : { kg: f.aKg(valor, modo), placas: null });
+const NOMBRE_MODO = { kg: 'Kg', lb: 'Lb', placas: 'Placas' };
+/** Unidad de peso de un ejercicio: la suya si lo anotas en kg o lb; si va en placas, la general. */
+const unidadDe = (id) => (modoDe(id) === 'placas' ? unidad() : modoDe(id));
+/** Formato para un valor de progreso de un ejercicio: placas, o peso en su unidad. */
+const valorTxt = (campo, id) => (campo === 'placas' ? f.placas : (kilos) => f.peso(kilos, unidadDe(id)));
+
 /* =========================================================
    Arranque y navegación
    ========================================================= */
@@ -121,18 +141,20 @@ function alTocar(e) {
     case 'tecnica': return hojaTecnica(id);
     case 'peso': return hojaPeso();
     case 'ajustes': return hojaAjustes();
+    case 'modo-carga': ui.abierto = id; return db.setCarga(id, el.dataset.modo);
     case 'descanso-mas': return sumarDescanso(15);
     case 'descanso-saltar': return detenerDescanso();
   }
 }
 
-/** Kilos y repeticiones se guardan al salir del campo, sin redibujar (no se cierra el teclado). */
+/** Carga y repeticiones se guardan al salir del campo, sin redibujar (no se cierra el teclado). */
 function alCambiarCampo(e) {
   const campo = e.target.closest('.campo-serie');
   if (!campo) return;
   const { ej, i, campo: tipo } = campo.dataset;
   const valor = f.aNumero(campo.value);
-  db.setSerie(f.hoyISO(), diaActivo(), ej, Number(i), { [tipo]: tipo === 'reps' && valor != null ? Math.round(valor) : valor }, { silencioso: true });
+  const cambios = tipo === 'reps' ? { reps: valor != null ? Math.round(valor) : null } : cambiosCarga(valor, modoDe(ej));
+  db.setSerie(f.hoyISO(), diaActivo(), ej, Number(i), cambios, { silencioso: true });
 }
 
 /* =========================================================
@@ -200,9 +222,9 @@ function tarjetaTerminado(sesion) {
     <div class="trio">
       <div><strong>${f.duracion(r.duracion)}</strong><span>Duración</span></div>
       <div><strong>${r.hechas}/${r.total}</strong><span>Series</span></div>
-      <div><strong>${Math.round(r.volumen).toLocaleString('es-MX')} kg</strong><span>Volumen</span></div>
+      <div><strong>${Math.round(f.desdeKg(r.volumen, unidad())).toLocaleString('es-MX')} ${unidad()}</strong><span>Volumen</span></div>
     </div>
-    ${r.records.length ? `<ul class="records">${r.records.map((x) => `<li>${icono('trofeo', 16)}Récord en ${EJERCICIOS[x.id].nombre}: ${f.kg(x.kg)}</li>`).join('')}</ul>` : ''}
+    ${r.records.length ? `<ul class="records">${r.records.map((x) => `<li>${icono('trofeo', 16)}Récord en ${EJERCICIOS[x.id].nombre}: ${x.placas != null ? f.placas(x.placas) : f.peso(x.kg, unidadDe(x.id))}</li>`).join('')}</ul>` : ''}
     <button class="btn-suave" data-accion="reabrir" data-id="${sesion.id}">Seguir editando</button>
   </section>`;
 }
@@ -222,11 +244,11 @@ function bloqueCalentamiento(sesion) {
   </section>`;
 }
 
-/** "60 kg × 10, 10, 9" si usaste el mismo peso; si no, cada serie con su peso. */
-function textoSeries(series) {
-  const pesos = new Set(series.map((s) => s.kg));
-  if (pesos.size === 1 && series[0].kg != null) return `${f.kg(series[0].kg)} × ${series.map((s) => s.reps ?? '–').join(', ')}`;
-  return series.map((s) => `${s.kg != null ? f.kg(s.kg) : '–'} × ${s.reps ?? '–'}`).join(', ');
+/** "60 kg × 10, 10, 9" (o "5 placas × 12, 12") si usaste la misma carga; si no, cada serie con la suya. */
+function textoSeries(series, modo) {
+  const cargas = new Set(series.map((s) => cargaTxt(s, modo)));
+  if (cargas.size === 1 && !cargas.has('–')) return `${cargaTxt(series[0], modo)} × ${series.map((s) => s.reps ?? '–').join(', ')}`;
+  return series.map((s) => `${cargaTxt(s, modo)} × ${s.reps ?? '–'}`).join(', ');
 }
 
 function tarjetaEjercicio(e, i, sesion, abierto) {
@@ -249,14 +271,16 @@ function cuerpoEjercicio(e, info, sesion) {
   const series = sesion?.series[e.id] ?? [];
   const ultima = calc.ultimaVez(db.estado(), e.id, sesion?.id);
   const descanso = info.tipo === 'compuesto' ? aj.descansoCompuesto : aj.descansoAislamiento;
-  // Sugerencias (en gris): el peso de tu serie anterior de hoy, o el de la vez pasada.
+  const modo = modoDe(e.id);
+  const nombreCarga = { kg: 'Kilos', lb: 'Libras', placas: 'Placas' }[modo];
+  // Sugerencias (en gris): la carga de tu serie anterior de hoy, o la de la vez pasada.
   const filas = Array.from({ length: e.series }, (_, i) => {
     const s = series[i] ?? {};
-    const kgSug = series[i - 1]?.kg ?? ultima?.series[i]?.kg ?? ultima?.series.at(-1)?.kg ?? '';
+    const cargaSug = cargaCampo(series[i - 1], modo) ?? cargaCampo(ultima?.series[i], modo) ?? cargaCampo(ultima?.series.at(-1), modo) ?? '';
     const repsSug = ultima?.series[i]?.reps ?? series[i - 1]?.reps ?? '';
     return `<div class="serie${s.hecha ? ' hecha' : ''}">
       <span class="serie-num">${i + 1}</span>
-      <input class="campo-serie" inputmode="decimal" autocomplete="off" aria-label="Kilos, serie ${i + 1}" data-ej="${e.id}" data-i="${i}" data-campo="kg" value="${s.kg ?? ''}" placeholder="${kgSug}">
+      <input class="campo-serie" inputmode="${modo === 'placas' ? 'numeric' : 'decimal'}" autocomplete="off" aria-label="${nombreCarga}, serie ${i + 1}" data-ej="${e.id}" data-i="${i}" data-campo="carga" value="${cargaCampo(s, modo) ?? ''}" placeholder="${cargaSug}">
       <input class="campo-serie" inputmode="numeric" autocomplete="off" aria-label="Repeticiones, serie ${i + 1}" data-ej="${e.id}" data-i="${i}" data-campo="reps" value="${s.reps ?? ''}" placeholder="${repsSug || (e.min === e.max ? e.min : `${e.min}–${e.max}`)}">
       <button class="check" data-accion="serie" data-ej="${e.id}" data-i="${i}" aria-pressed="${Boolean(s.hecha)}" aria-label="Marcar serie ${i + 1}">${icono('check', 20)}</button>
     </div>`;
@@ -264,10 +288,12 @@ function cuerpoEjercicio(e, info, sesion) {
   return `<div class="ej-cuerpo">
     <div class="ej-ref">
       <button class="demo mini" data-accion="tecnica" data-id="${e.id}" aria-label="Ver la técnica de ${info.nombre}">${demo(e.id)}</button>
-      <p class="ej-ultima">${ultima ? `La vez pasada (${f.etiquetaFecha(ultima.fecha).toLowerCase()}): <strong>${textoSeries(ultima.series)}</strong>` : 'Primera vez: anota el peso con el que trabajes.'}</p>
+      <p class="ej-ultima">${ultima ? `La vez pasada (${f.etiquetaFecha(ultima.fecha).toLowerCase()}): <strong>${textoSeries(ultima.series, modo)}</strong>` : modo === 'placas' ? 'Primera vez: anota cuántas placas pusiste con el pasador.' : 'Primera vez: anota el peso con el que trabajes.'}</p>
     </div>
-    ${calc.tocaSubir(ultima, e) ? `<p class="pista">${icono('subir', 16)}<span>La vez pasada llegaste a ${e.max} repeticiones en todas las series. Sube un poco el peso hoy.</span></p>` : ''}
-    <div class="series-cab"><span>Serie</span><span>Kg</span><span>Reps</span><span></span></div>
+    ${e.clave ? `<p class="ej-clave"><span class="etiqueta">Coach</span>${e.clave}</p>` : ''}
+    ${calc.tocaSubir(ultima, e) ? `<p class="pista">${icono('subir', 16)}<span>La vez pasada llegaste a ${e.max} repeticiones en todas las series. ${modo === 'placas' ? 'Sube una placa hoy.' : 'Sube un poco el peso hoy.'}</span></p>` : ''}
+    <div class="modo-carga"><span>Anotar en</span><div class="segmento" role="group" aria-label="Cómo anotar la carga">${['kg', 'lb', 'placas'].map((m) => `<button data-accion="modo-carga" data-id="${e.id}" data-modo="${m}" aria-pressed="${m === modo}">${NOMBRE_MODO[m]}</button>`).join('')}</div></div>
+    <div class="series-cab"><span>Serie</span><span>${NOMBRE_MODO[modo]}</span><span>Reps</span><span></span></div>
     ${filas}
     <p class="ej-pie">${icono('reloj', 15)}${info.tipo === 'compuesto' ? 'Compuesto' : 'Aislamiento'}: descanso de ${f.reloj(descanso)} al marcar cada serie.</p>
   </div>`;
@@ -308,16 +334,20 @@ function marcarSerie(boton) {
     return;
   }
   // Si el campo está vacío se usa la sugerencia: repetir lo de la vez pasada es un solo toque.
-  const [campoKg, campoReps] = boton.closest('.serie').querySelectorAll('input');
-  const kgValor = f.aNumero(campoKg.value) ?? f.aNumero(campoKg.placeholder);
+  const [campoCarga, campoReps] = boton.closest('.serie').querySelectorAll('input');
+  const modo = modoDe(ej);
+  const cargaValor = f.aNumero(campoCarga.value) ?? f.aNumero(campoCarga.placeholder);
   const repsValor = f.aNumero(campoReps.value) ?? (campoReps.placeholder.includes('–') ? null : f.aNumero(campoReps.placeholder));
-  if (kgValor == null) { campoKg.focus(); return aviso('Escribe los kilos de esta serie'); }
+  if (cargaValor == null) {
+    campoCarga.focus();
+    return aviso({ kg: 'Escribe los kilos de esta serie', lb: 'Escribe las libras de esta serie', placas: '¿Cuántas placas pusiste?' }[modo]);
+  }
   if (repsValor == null) { campoReps.focus(); return aviso('Escribe cuántas repeticiones hiciste'); }
 
   const prescripcion = DIAS[dia].ejercicios.find((e) => e.id === ej);
   const terminaEjercicio = hechasDe(sesion, ej) + 1 >= prescripcion.series;
   ui.abierto = terminaEjercicio ? undefined : ej; // al terminar, se abre el siguiente
-  const nueva = db.setSerie(hoy, dia, ej, i, { kg: kgValor, reps: Math.round(repsValor), hecha: true });
+  const nueva = db.setSerie(hoy, dia, ej, i, { ...cambiosCarga(cargaValor, modo), reps: Math.round(repsValor), hecha: true });
   const avance = calc.avanceSesion(nueva, dia);
   if (avance.hechas < avance.total) iniciarDescanso(EJERCICIOS[ej].tipo);
   else aviso('Completaste todas las series. Termina el entrenamiento abajo.');
@@ -396,11 +426,11 @@ function vistaProgreso() {
   const primerPeso = est.pesos[0];
 
   const seccionPeso = ultimoPeso
-    ? `<p class="cifra-media">${f.kg(ultimoPeso.kg)}</p>
+    ? `<p class="cifra-media">${pesoTxt(ultimoPeso.kg)}</p>
        <p class="texto-sub">${est.pesos.length > 1
-         ? `${ultimoPeso.kg - primerPeso.kg > 0 ? '+' : ultimoPeso.kg - primerPeso.kg < 0 ? '−' : ''}${f.kg(Math.abs(ultimoPeso.kg - primerPeso.kg))} desde el ${f.fechaCorta(primerPeso.fecha)}`
+         ? `${ultimoPeso.kg - primerPeso.kg > 0 ? '+' : ultimoPeso.kg - primerPeso.kg < 0 ? '−' : ''}${pesoTxt(Math.abs(ultimoPeso.kg - primerPeso.kg))} desde el ${f.fechaCorta(primerPeso.fecha)}`
          : `Registrado ${f.etiquetaFecha(ultimoPeso.fecha).toLowerCase()}`}</p>
-       ${est.pesos.length > 1 ? g.linea(est.pesos, { etiqueta: 'Peso corporal' }) : ''}`
+       ${est.pesos.length > 1 ? g.linea(est.pesos, { etiqueta: 'Peso corporal', valor: pesoTxt }) : ''}`
     : '<p class="texto-sub">Pésate una vez por semana, a la misma hora. Para marcar, lo que cuenta es la tendencia, no un día.</p>';
 
   return `
@@ -421,10 +451,11 @@ function vistaProgreso() {
       <div class="seccion-cab"><h2>Ejercicios</h2></div>
       ${ejercicios.length
         ? `<ul class="lista">${ejercicios.map((x) => {
-          const cambio = x.veces > 1 ? x.ultima.kg - x.primera.kg : 0;
+          const cambio = x.veces > 1 ? x.ultima.valor - x.primera.valor : 0;
+          const txt = valorTxt(x.campo, x.id);
           return `<li><button class="fila" data-accion="ver-ej" data-id="${x.id}">
-            <span class="fila-texto"><strong>${x.nombre}</strong><small>Mejor: ${f.kg(x.mejor.kg)} × ${x.mejor.reps}. Última: ${f.kg(x.ultima.kg)} × ${x.ultima.reps}</small></span>
-            ${cambio ? `<span class="cambio">${cambio > 0 ? '+' : '−'}${f.kg(Math.abs(cambio))}</span>` : ''}${icono('derecha', 18)}
+            <span class="fila-texto"><strong>${x.nombre}</strong><small>Mejor: ${txt(x.mejor.valor)} × ${x.mejor.reps}. Última: ${txt(x.ultima.valor)} × ${x.ultima.reps}</small></span>
+            ${cambio ? `<span class="cambio">${cambio > 0 ? '+' : '−'}${txt(Math.abs(cambio))}</span>` : ''}${icono('derecha', 18)}
           </button></li>`;
         }).join('')}</ul>`
         : '<p class="texto-sub">Cuando marques tus primeras series, aquí verás cómo suben tus pesos.</p>'}
@@ -518,17 +549,22 @@ function teclado(contenedor, inicial, alCambiar) {
 function hojaEjercicio(id) {
   const est = db.estado();
   const progreso = calc.progresoEjercicio(est, id);
-  const mejor = calc.mejorSerie(progreso);
+  const mejor = calc.mejorSerie(progreso, 'valor');
   const historial = calc.historial(est, id);
+  const campo = progreso[0]?.campo ?? 'kg';
+  const txt = valorTxt(campo, id);
+  const titulo = campo === 'placas' ? 'Placas de tu mejor serie' : `${unidadDe(id) === 'lb' ? 'Libras' : 'Kilos'} de tu mejor serie`;
+  // La gráfica lee p.kg: se le pasa el valor (kilos o placas) y `txt` le da formato.
+  const puntos = progreso.map((p) => ({ ...p, kg: p.valor }));
   abrirHoja(`
     <div class="hoja-cab"><span></span><h2>${EJERCICIOS[id].nombre}</h2><button class="texto-btn listo" data-cerrar>Listo</button></div>
     <div class="dupla">
-      <div><span class="etiqueta">Mejor marca</span><strong class="cifra-media">${f.kg(mejor.kg)}</strong><span class="texto-sub">${mejor.reps} repeticiones, ${f.fechaCorta(mejor.fecha)}</span></div>
+      <div><span class="etiqueta">Mejor marca</span><strong class="cifra-media">${txt(mejor.valor)}</strong><span class="texto-sub">${mejor.reps} repeticiones, ${f.fechaCorta(mejor.fecha)}</span></div>
       <div><span class="etiqueta">Veces</span><strong class="cifra-media">${historial.length}</strong></div>
     </div>
-    ${progreso.length > 1 ? `<p class="etiqueta">Kilos de tu mejor serie</p>${g.linea(progreso, { etiqueta: 'Kilos de la mejor serie', detalle: (p) => `${f.kg(p.kg)} × ${p.reps}` })}` : ''}
+    ${puntos.length > 1 ? `<p class="etiqueta">${titulo}</p>${g.linea(puntos, { etiqueta: titulo, valor: txt, detalle: (p) => `${txt(p.kg)} × ${p.reps}` })}` : ''}
     <p class="ajustes-titulo">Historial</p>
-    <ul class="historial">${historial.map((h) => `<li><span>${f.etiquetaFecha(h.fecha)}</span><span>${textoSeries(h.series)}</span></li>`).join('')}</ul>
+    <ul class="historial">${historial.map((h) => `<li><span>${f.etiquetaFecha(h.fecha)}</span><span>${textoSeries(h.series, modoDe(id))}</span></li>`).join('')}</ul>
   `);
 }
 
@@ -537,24 +573,26 @@ function hojaEjercicio(id) {
 function hojaPeso() {
   const est = db.estado();
   const hoy = f.hoyISO();
-  let texto = est.pesos.length ? String(est.pesos.at(-1).kg) : '0';
+  const u = unidad();
+  let texto = est.pesos.length ? String(f.desdeKg(est.pesos.at(-1).kg, u)) : '0';
   const hoja = abrirHoja(`
     <div class="hoja-cab"><button class="texto-btn" data-cerrar>Cancelar</button><h2>Tu peso de hoy</h2><span></span></div>
     <p class="monto-grande" aria-live="polite"></p>
     <div class="teclado"></div>
     <button class="btn-primario guardar">Guardar peso</button>
-    ${est.pesos.length ? `<p class="ajustes-titulo">Registros</p><ul class="historial">${[...est.pesos].reverse().slice(0, 8).map((p) => `<li><span>${f.etiquetaFecha(p.fecha)}</span><span>${f.kg(p.kg)}<button class="borrar-peso" data-peso="${p.id}" aria-label="Borrar registro">${icono('basura', 16)}</button></span></li>`).join('')}</ul>` : ''}
+    ${est.pesos.length ? `<p class="ajustes-titulo">Registros</p><ul class="historial">${[...est.pesos].reverse().slice(0, 8).map((p) => `<li><span>${f.etiquetaFecha(p.fecha)}</span><span>${pesoTxt(p.kg)}<button class="borrar-peso" data-peso="${p.id}" aria-label="Borrar registro">${icono('basura', 16)}</button></span></li>`).join('')}</ul>` : ''}
   `);
   const $ = (s) => hoja.querySelector(s);
   const pintar = () => {
     const n = f.aNumero(texto) ?? 0;
-    $('.monto-grande').textContent = `${texto} kg`;
+    $('.monto-grande').textContent = `${texto} ${u}`;
     $('.monto-grande').classList.toggle('cero', !n);
-    $('.guardar').disabled = n < 25 || n > 300;
+    const kilos = f.aKg(n, u);
+    $('.guardar').disabled = kilos < 25 || kilos > 300;
   };
   teclado($('.teclado'), texto, (v) => { texto = v; pintar(); });
   $('.guardar').addEventListener('click', () => {
-    db.registrarPeso(hoy, f.aNumero(texto));
+    db.registrarPeso(hoy, f.aKg(f.aNumero(texto), u));
     cerrarHoja();
     aviso('Peso guardado');
   });
@@ -578,6 +616,10 @@ function hojaAjustes() {
     <p class="ajustes-titulo">Apariencia</p>
     ${segmento('tema', [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Oscuro']], a.tema)}
 
+    <p class="ajustes-titulo">Unidad de peso</p>
+    ${segmento('unidad', [['kg', 'Kilos (kg)'], ['lb', 'Libras (lb)']], a.unidad)}
+    <p class="ajustes-nota">Lo que ya anotaste se convierte solo. En las poleas con placas la app te pregunta cuántas placas pusiste; en cada ejercicio puedes cambiar entre kg, lb y placas.</p>
+
     <p class="ajustes-titulo">Descanso en ejercicios compuestos</p>
     ${segmento('descansoCompuesto', [[90, '1:30'], [105, '1:45'], [120, '2:00']], a.descansoCompuesto)}
     <p class="ajustes-titulo">Descanso en aislamientos</p>
@@ -593,14 +635,14 @@ function hojaAjustes() {
     </div>
     <p class="ajustes-nota">Tus datos viven solo en este iPhone. Guarda un respaldo de vez en cuando en Archivos o en iCloud Drive.</p>
     <button class="btn-texto peligro borrar">Borrar todos los datos</button>
-    <p class="ajustes-nota centrado">Forja 1.1</p>
+    <p class="ajustes-nota centrado">Forja 1.2</p>
   `);
   const $ = (s) => hoja.querySelector(s);
   hoja.addEventListener('click', (e) => {
     const b = e.target.closest('[data-ajuste]');
     if (!b) return;
     const { ajuste, valor } = b.dataset;
-    db.setAjuste(ajuste, ajuste === 'tema' ? valor : Number(valor));
+    db.setAjuste(ajuste, ajuste === 'tema' || ajuste === 'unidad' ? valor : Number(valor));
     hoja.querySelectorAll(`[data-ajuste="${ajuste}"]`).forEach((x) => x.setAttribute('aria-pressed', x === b));
   });
   $('[name="sonido"]').addEventListener('change', (e) => db.setAjuste('sonido', e.target.checked));

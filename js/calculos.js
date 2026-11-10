@@ -32,17 +32,23 @@ export function tocaSubir(ultima, prescripcion) {
   return ultima.series.slice(0, prescripcion.series).every((s) => (s.reps ?? 0) >= prescripcion.max);
 }
 
-/** La serie más pesada (si empatan en kilos, la de más repeticiones). */
-export function mejorSerie(series) {
+/**
+ * Con qué se anotó la carga: 'kg' (kilos; las libras también se guardan en kilos)
+ * o 'placas' (máquinas de poleas con placas, donde no sabes cuánto pesa cada una).
+ */
+export const campoDe = (series = []) => (series.some((s) => s?.placas != null) ? 'placas' : 'kg');
+
+/** La serie más pesada (si empatan en carga, la de más repeticiones). Solo compara series del mismo tipo. */
+export function mejorSerie(series, campo = campoDe(series)) {
   return series.reduce((mejor, s) => {
-    if (s.kg == null) return mejor;
-    if (!mejor || s.kg > mejor.kg || (s.kg === mejor.kg && (s.reps ?? 0) > (mejor.reps ?? 0))) return s;
+    if (s[campo] == null) return mejor;
+    if (!mejor || s[campo] > mejor[campo] || (s[campo] === mejor[campo] && (s.reps ?? 0) > (mejor.reps ?? 0))) return s;
     return mejor;
   }, null);
 }
 
-/** Volumen = suma de kilos × repeticiones de las series hechas. */
-export const volumen = (series) => hechas(series).reduce((s, x) => s + (x.kg ?? 0) * (x.reps ?? 0), 0);
+/** Volumen = suma de kilos × repeticiones de las series hechas (las de placas no cuentan: no se sabe su peso). */
+export const volumen = (series) => hechas(series).reduce((s, x) => s + (x.placas == null ? (x.kg ?? 0) * (x.reps ?? 0) : 0), 0);
 
 /** Cuántas series pide el coach ese día y cuántas llevas. */
 export function avanceSesion(sesion, dia) {
@@ -53,7 +59,7 @@ export function avanceSesion(sesion, dia) {
 
 /**
  * Resumen al terminar: duración, series, volumen y récords
- * (ejercicios donde levantaste más kilos que en cualquier sesión anterior).
+ * (ejercicios donde levantaste más kilos, o más placas, que en cualquier sesión anterior).
  */
 export function resumenSesion(est, sesion) {
   const { total, hechas: hechasN } = avanceSesion(sesion, sesion.dia);
@@ -61,13 +67,14 @@ export function resumenSesion(est, sesion) {
   const records = [];
   for (const [id, series] of Object.entries(sesion.series)) {
     vol += volumen(series);
-    const hoy = mejorSerie(hechas(series));
+    const campo = campoDe(hechas(series));
+    const hoy = mejorSerie(hechas(series), campo);
     if (!hoy) continue;
     const antes = est.sesiones
       .filter((s) => s.id !== sesion.id && (s.fecha < sesion.fecha || (s.fecha === sesion.fecha && s.inicio < sesion.inicio)))
-      .map((s) => mejorSerie(hechas(s.series[id])))
+      .map((s) => mejorSerie(hechas(s.series[id]), campo))
       .filter(Boolean);
-    if (antes.length && hoy.kg > Math.max(...antes.map((s) => s.kg))) records.push({ id, kg: hoy.kg });
+    if (antes.length && hoy[campo] > Math.max(...antes.map((s) => s[campo]))) records.push({ id, [campo]: hoy[campo] });
   }
   const fin = sesion.fin ?? Date.now();
   return { duracion: fin - sesion.inicio, total, hechas: hechasN, volumen: vol, records };
@@ -89,12 +96,21 @@ export function semanas(est, lunesActual, n = 8) {
   });
 }
 
-/** Mejor serie de cada sesión, de la más vieja a la más nueva (para la gráfica del ejercicio). */
-export const progresoEjercicio = (est, ejercicioId) =>
-  historial(est, ejercicioId)
-    .map((h) => ({ fecha: h.fecha, ...mejorSerie(h.series) }))
-    .filter((p) => p.kg != null)
+/**
+ * Mejor serie de cada sesión, de la más vieja a la más nueva (para la gráfica del ejercicio).
+ * Si el ejercicio se anotó a veces en kilos y a veces en placas, se usa lo de la última vez
+ * (no se pueden comparar). Cada punto trae `valor` (kilos o placas) y `campo`.
+ */
+export function progresoEjercicio(est, ejercicioId) {
+  const h = historial(est, ejercicioId);
+  if (!h.length) return [];
+  const campo = campoDe(h[0].series);
+  return h
+    .map((x) => ({ fecha: x.fecha, campo, ...mejorSerie(x.series, campo) }))
+    .filter((p) => p[campo] != null)
+    .map((p) => ({ ...p, valor: p[campo] }))
     .reverse();
+}
 
 /** Ejercicios que ya tienen historial, con su mejor marca. */
 export function ejerciciosConHistorial(est) {
@@ -102,8 +118,8 @@ export function ejerciciosConHistorial(est) {
     .map((id) => {
       const progreso = progresoEjercicio(est, id);
       if (!progreso.length) return null;
-      const mejor = mejorSerie(progreso);
-      return { id, nombre: EJERCICIOS[id].nombre, mejor, ultima: progreso.at(-1), veces: progreso.length, primera: progreso[0] };
+      const mejor = mejorSerie(progreso, 'valor');
+      return { id, nombre: EJERCICIOS[id].nombre, campo: progreso[0].campo, mejor, ultima: progreso.at(-1), veces: progreso.length, primera: progreso[0] };
     })
     .filter(Boolean)
     .sort((a, b) => b.ultima.fecha.localeCompare(a.ultima.fecha) || a.nombre.localeCompare(b.nombre));

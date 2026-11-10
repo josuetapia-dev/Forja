@@ -188,11 +188,17 @@ ul { margin: 0; padding: 0; list-style: none; }
 .demo-pasos img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 12px; filter: var(--foto-filtro, none); }
 .demo-pasos figcaption { color: var(--tinta-2); font-size: 13px; text-align: center; padding-top: 4px; }
 .ej-ultima strong { color: var(--tinta); font-weight: 600; }
+.ej-clave { margin-bottom: 12px; padding-left: 10px; border-left: 2px solid var(--acento); color: var(--tinta-2); font-size: 14px; }
+.ej-clave .etiqueta { display: block; margin-bottom: 2px; }
 .pista {
   display: flex; gap: 8px; align-items: flex-start; margin-bottom: 12px; padding: 10px 12px;
   border-radius: 12px; background: var(--acento-suave); color: var(--tinta); font-size: 14px;
 }
 .pista .ico { flex: none; color: var(--acento); margin-top: 1px; }
+
+.modo-carga { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--tinta-3); font-size: 12px; }
+.modo-carga .segmento { flex: 1; }
+.modo-carga .segmento button { padding: 5px 8px; font-size: 13px; }
 
 .series-cab, .serie { display: grid; grid-template-columns: 40px 1fr 1fr 48px; gap: 8px; align-items: center; }
 .series-cab { color: var(--tinta-3); font-size: 12px; padding: 0 0 6px; }

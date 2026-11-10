@@ -51,8 +51,24 @@ export function etiquetaFecha(iso) {
   return fechaLarga(iso);
 }
 
+const numero = (n, dec = 2) => Number(n).toLocaleString('es-MX', { maximumFractionDigits: dec });
+
 /** 62.5 → "62.5 kg", 60 → "60 kg". */
-export const kg = (n) => `${Number(n).toLocaleString('es-MX', { maximumFractionDigits: 2 })} kg`;
+export const kg = (n) => `${numero(n)} kg`;
+
+/**
+ * Libras. Los pesos se guardan siempre en kilos (con todos sus decimales,
+ * así 25 lb vuelve a mostrarse como 25 lb) y se convierten solo al mostrarlos.
+ */
+export const LB_POR_KG = 2.2046226218;
+export const aKg = (valor, unidad) => (valor == null ? null : unidad === 'lb' ? valor / LB_POR_KG : valor);
+/** Kilos → número en la unidad pedida, redondeado a 1 decimal en libras. */
+export const desdeKg = (kilos, unidad) => (kilos == null ? null : unidad === 'lb' ? Math.round(kilos * LB_POR_KG * 10) / 10 : Math.round(kilos * 100) / 100);
+/** 27.2155 kg en 'lb' → "60 lb"; en 'kg' → "27.22 kg". */
+export const peso = (kilos, unidad = 'kg') => `${numero(desdeKg(kilos, unidad))} ${unidad === 'lb' ? 'lb' : 'kg'}`;
+
+/** Máquinas de placas (poleas): 1 → "1 placa", 5 → "5 placas". */
+export const placas = (n) => `${numero(n, 1)} ${n === 1 ? 'placa' : 'placas'}`;
 
 /** Segundos → "1:45". */
 export const reloj = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, s) % 60).padStart(2, '0')}`;

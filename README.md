@@ -6,22 +6,25 @@ Es una **web app instalable (PWA)**, hermana de [Finax](https://josuetapia-dev.g
 se agrega a la pantalla de inicio desde Safari, abre como app, funciona sin internet y
 los datos viven **solo en tu iPhone**.
 
-La rutina viene del PDF del coach: *Rutina Josué — Marcación + Hipertrofia* (lunes a viernes).
+La rutina viene del PDF del coach: *Rutina Josué — Enfoque en silueta en V* (lunes a viernes): hombro tres veces por semana
+y espalda alta para ensanchar, pierna dos días y caminar 8,000–10,000 pasos diarios como cardio.
 
-## Qué hace (versión 1.1)
+## Qué hace (versión 1.2)
 
 | Pantalla | Qué ves |
 |---|---|
-| **Hoy** | La rutina del día (lunes: pecho, hombro y tríceps; martes: pierna…), el calentamiento como lista para palomear y cada ejercicio con sus series. El fin de semana te deja recuperar el día que te faltó |
+| **Hoy** | La rutina del día (lunes: hombro, pecho y tríceps; martes: pierna…), la nota del coach en cada ejercicio, el calentamiento como lista para palomear y cada ejercicio con sus series. El fin de semana te deja recuperar el día que te faltó |
 | **Semana** | Los 5 días con todos sus ejercicios, qué días ya entrenaste, las reglas del coach, el calentamiento y la vuelta a la calma. Toca un día para entrenarlo hoy |
 | **Progreso** | Días entrenados por semana, tu peso corporal y cada ejercicio con su mejor marca, lo que has subido y su gráfica |
-| **Ajustes** | Tema, tiempos de descanso, sonido al terminar el descanso, respaldo |
+| **Ajustes** | Tema, unidad de peso (kilos o libras), tiempos de descanso, sonido al terminar el descanso, respaldo |
 
 ### Cómo se usa en el gym
 
 1. Abre Forja: ya está en la rutina del día y el primer ejercicio abierto.
    La miniatura animada muestra el movimiento; tócala para verlo en grande con la posición inicial y la final.
-2. Escribe los kilos y las repeticiones de la serie y toca ✓.
+2. Escribe la carga y las repeticiones de la serie y toca ✓. La carga va en **kg**, **lb** o **placas**:
+   en las poleas y máquinas con torre de placas (las que eliges con el pasador) la app pregunta cuántas placas pusiste,
+   porque no sabes cuánto pesa cada una. Con el selector **Anotar en** de cada ejercicio lo cambias cuando quieras.
    Las siguientes series ya vienen sugeridas (en gris) con lo mismo: si repites, solo tocas ✓.
 3. Arranca el **descanso**: 2:00 en compuestos y 1:00 en aislamientos (ajustable). Puedes sumar 15 s o saltarlo.
    Al terminar suena un pitido.
@@ -34,8 +37,8 @@ La rutina viene del PDF del coach: *Rutina Josué — Marcación + Hipertrofia* 
 - **Subir peso**: si la última vez llegaste al máximo del rango en todas las series, aparece
   "Sube un poco el peso hoy" (regla de progresión del PDF).
 - **Descansos** según el tipo de ejercicio: 90–120 s en compuestos y 45–75 s en aislamientos.
-- **Récord**: cuando levantas más kilos que en cualquier sesión anterior de ese ejercicio.
-- **Volumen** = suma de kilos × repeticiones de las series hechas.
+- **Récord**: cuando levantas más kilos (o más placas) que en cualquier sesión anterior de ese ejercicio.
+- **Volumen** = suma de kilos × repeticiones de las series hechas (las series en placas no cuentan: no se sabe su peso).
 - Mientras entrenas, la pantalla no se apaga (si tu versión de iOS lo permite).
 
 ## Probarlo en la computadora
@@ -101,9 +104,13 @@ servidor.mjs          Servidor local para desarrollo (puerto 5174)
 
 - **Misma base que Finax** (HTML, CSS y JavaScript sin dependencias), para publicar en GitHub Pages sin compilar.
 - **Los ejercicios con el mismo nombre comparten historial** entre días (Prensa del martes y del jueves,
-  Pec Deck, Elevaciones laterales, Tríceps en polea, Remo en polea, Hack squat…). Los que el PDF escribe distinto
-  se llevan aparte: "Jalón en polea alta" (miércoles) y "Jalón en polea" (viernes); "Curl de bíceps con barra"
-  y "Curl de bíceps". Si en realidad son el mismo, se juntan cambiando el id en `js/rutina.js`.
+  Pec Deck, Elevaciones laterales, Jalón en polea alta, Tríceps en polea, Remo en polea, Hack squat…).
+  "Remo en polea baja" (miércoles) y "Remo en polea" (viernes) se juntan como un solo ejercicio.
+  "Curl de bíceps con barra" (miércoles) y "Curl de bíceps" (viernes) se llevan aparte.
+  Si en realidad son el mismo, se juntan cambiando el id en `js/rutina.js`.
+- **Rutina en V (versión 1.2)**: los ejercicios que salieron (curl en banco predicador y el "Jalón en polea" del
+  viernes anterior) siguen en `EJERCICIOS` para que su historial se vea en Progreso. El calentamiento y la vuelta
+  a la calma se quedaron de la rutina anterior, porque el PDF nuevo no los cambia.
 - **El descanso guarda la hora en que termina**, no un contador: si sales a WhatsApp y vuelves, el tiempo es correcto.
 - **El pitido usa Web Audio**: en el iPhone no suena con el interruptor de silencio activado.
 - **Fotos de técnica** de [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (licencia Unlicense,
@@ -113,6 +120,12 @@ servidor.mjs          Servidor local para desarrollo (puerto 5174)
   Versiones elegidas donde el PDF no especifica: extensión de tríceps por encima de la cabeza **con mancuerna**,
   curl de bíceps del viernes **con mancuernas**, pantorrillas **de pie**; los dos jalones usan las mismas fotos
   (Wide-Grip Lat Pulldown). Para cambiar una, reemplaza sus dos fotos en `img/ejercicios/`.
+- **Los pesos se guardan siempre en kilos**, con todos sus decimales, y se convierten al mostrarlos: si anotas 25 lb
+  vuelve a salir 25 lb, y cambiar la unidad en Ajustes no altera lo que ya anotaste.
+- **Placas aparte de los kilos**: una serie guarda `kg` o `placas`. Los récords y la gráfica solo comparan series del
+  mismo tipo; si un ejercicio cambió de kilos a placas, el progreso sigue lo de la última vez.
+  Por defecto van en placas: Pec Deck, tríceps en polea, extensión de cuádriceps, femoral acostado, abductora,
+  jalones, remo en polea y face pull (`placas: true` en `js/rutina.js`).
 - **El peso corporal no se pinta como bueno o malo**: para marcar, bajar suele ser la meta, pero depende de ti y de tu coach.
 
 ## Ideas para siguientes versiones

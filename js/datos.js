@@ -11,10 +11,13 @@ const CLAVE = 'forja.v1';
 
 const vacio = () => ({
   version: 1,
-  // { id, fecha 'AAAA-MM-DD', dia (1–5), inicio, fin|null, calentamiento: [bool], series: { [ejercicioId]: [{ kg, reps, hecha }] } }
+  // { id, fecha 'AAAA-MM-DD', dia (1–5), inicio, fin|null, calentamiento: [bool], series: { [ejercicioId]: [{ kg, placas, reps, hecha }] } }
+  // kg siempre en kilos (si anotas en libras se convierte); placas = cuántas placas en máquinas de poleas.
   sesiones: [],
   pesos: [], // { id, fecha, kg } — peso corporal, uno por día
-  ajustes: { tema: 'auto', descansoCompuesto: 120, descansoAislamiento: 60, sonido: true },
+  // unidad: 'kg' o 'lb' para mostrar y escribir pesos.
+  // cargas: { [ejercicioId]: 'kg' | 'lb' | 'placas' } — cómo anotas cada ejercicio, si lo cambiaste.
+  ajustes: { tema: 'auto', descansoCompuesto: 120, descansoAislamiento: 60, sonido: true, unidad: 'kg', cargas: {} },
 });
 
 let datos = cargar();
@@ -65,13 +68,13 @@ function asegurarSesion(fecha, dia) {
   return sesion;
 }
 
-/** Cambia una serie (kg, reps o hecha). Con silencioso = true no redibuja la pantalla. */
+/** Cambia una serie (kg, placas, reps o hecha). Con silencioso = true no redibuja la pantalla. */
 export function setSerie(fecha, dia, ejercicioId, indice, cambios, { silencioso = false } = {}) {
   const sesion = asegurarSesion(fecha, dia);
   const lista = (sesion.series[ejercicioId] ??= []);
-  lista[indice] = { kg: null, reps: null, hecha: false, ...lista[indice], ...cambios };
+  lista[indice] = { kg: null, placas: null, reps: null, hecha: false, ...lista[indice], ...cambios };
   // Rellena huecos si se marcó la serie 3 antes que la 2.
-  for (let i = 0; i < lista.length; i++) lista[i] ??= { kg: null, reps: null, hecha: false };
+  for (let i = 0; i < lista.length; i++) lista[i] ??= { kg: null, placas: null, reps: null, hecha: false };
   guardar({ silencioso });
   return sesion;
 }
@@ -118,6 +121,12 @@ export function eliminarPeso(id) {
 
 export function setAjuste(clave, valor) {
   datos.ajustes[clave] = valor;
+  guardar();
+}
+
+/** Cómo anotas un ejercicio: en kilos, libras o placas. */
+export function setCarga(ejercicioId, modo) {
+  datos.ajustes.cargas = { ...datos.ajustes.cargas, [ejercicioId]: modo };
   guardar();
 }
 

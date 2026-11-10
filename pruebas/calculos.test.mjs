@@ -11,12 +11,17 @@ import { diaSemana, inicioSemana } from '../js/formato.js';
 const serie = (kg, reps, hecha = true) => ({ kg, reps, hecha });
 const sesion = (id, fecha, dia, series, inicio = 1) => ({ id, fecha, dia, inicio, fin: null, calentamiento: [], series });
 const estado = (sesiones) => ({ sesiones, pesos: [], ajustes: {} });
-const banca = DIAS[1].ejercicios[0]; // Press de banca con barra, 4 × 8–10
+const banca = { series: 4, min: 8, max: 10 }; // como el press de banca de la rutina anterior
 
-test('la rutina del PDF está completa', () => {
-  assert.deepEqual(Object.values(DIAS).map((d) => d.ejercicios.length), [7, 7, 8, 7, 7]);
+test('la rutina del PDF (silueta en V) está completa', () => {
+  assert.deepEqual(Object.values(DIAS).map((d) => d.ejercicios.length), [7, 7, 7, 7, 7]);
   for (const d of Object.values(DIAS)) for (const e of d.ejercicios) assert.ok(EJERCICIOS[e.id], `falta ${e.id}`);
-  assert.deepEqual([banca.series, banca.min, banca.max], [4, 8, 10]);
+  // Silueta en V: el lunes empieza con elevaciones laterales y el press de banca baja a 3 series.
+  assert.equal(DIAS[1].ejercicios[0].id, 'elevaciones-laterales');
+  const bancaLunes = DIAS[1].ejercicios.find((e) => e.id === 'press-banca-barra');
+  assert.deepEqual([bancaLunes.series, bancaLunes.min, bancaLunes.max], [3, 8, 10]);
+  // El viernes ya usa el mismo jalón que el miércoles (comparten historial).
+  assert.ok(DIAS[5].ejercicios.some((e) => e.id === 'jalon-polea-alta'));
 });
 
 test('lunes es 1 y la semana empieza en lunes', () => {
@@ -56,7 +61,7 @@ test('avance y resumen de la sesión, con récord', () => {
   const anterior = sesion('a', '2026-10-12', 1, { 'press-banca-barra': [serie(60, 10)] });
   const hoy = sesion('b', '2026-10-19', 1, { 'press-banca-barra': [serie(62.5, 8), serie(62.5, 8)], 'pec-deck': [serie(40, 12)] }, 5);
   const est = estado([anterior, hoy]);
-  assert.deepEqual(calc.avanceSesion(hoy, 1), { total: 21, hechas: 3 });
+  assert.deepEqual(calc.avanceSesion(hoy, 1), { total: 20, hechas: 3 });
   const r = calc.resumenSesion(est, hoy);
   assert.equal(r.volumen, 62.5 * 8 * 2 + 40 * 12);
   assert.deepEqual(r.records, [{ id: 'press-banca-barra', kg: 62.5 }]); // pec deck es la primera vez: no es récord
@@ -77,4 +82,29 @@ test('cada ejercicio tiene sus dos fotos de técnica', async () => {
   for (const id of Object.keys(EJERCICIOS)) {
     for (const ruta of fotos(id)) assert.ok(existsSync(new URL(`../${ruta}`, import.meta.url)), `falta ${ruta}`);
   }
+});
+
+test('libras: se guardan en kilos y vuelven a mostrarse igual', async () => {
+  const f = await import('../js/formato.js');
+  const kilos = f.aKg(25, 'lb');
+  assert.ok(Math.abs(kilos - 11.34) < 0.01);
+  assert.equal(f.desdeKg(kilos, 'lb'), 25);
+  assert.equal(f.peso(kilos, 'lb'), '25 lb');
+  assert.equal(f.peso(60, 'kg'), '60 kg');
+  assert.equal(f.placas(1), '1 placa');
+  assert.equal(f.placas(5), '5 placas');
+});
+
+test('poleas con placas: récords y progreso por placas, sin sumar al volumen', () => {
+  const p = (placas, reps) => ({ kg: null, placas, reps, hecha: true });
+  const antes = sesion('a', '2026-10-12', 1, { 'triceps-polea': [p(5, 12), p(5, 12)] });
+  const hoy = sesion('b', '2026-10-19', 1, { 'triceps-polea': [p(6, 10), p(6, 9)], 'press-banca-barra': [serie(60, 10)] }, 5);
+  const est = estado([antes, hoy]);
+  const r = calc.resumenSesion(est, hoy);
+  assert.equal(r.volumen, 600); // solo el press de banca
+  assert.deepEqual(r.records, [{ id: 'triceps-polea', placas: 6 }]);
+  const prog = calc.progresoEjercicio(est, 'triceps-polea');
+  assert.deepEqual(prog.map((x) => x.valor), [5, 6]);
+  assert.equal(prog[0].campo, 'placas');
+  assert.equal(calc.ejerciciosConHistorial(est).find((x) => x.id === 'triceps-polea').mejor.valor, 6);
 });

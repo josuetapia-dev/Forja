@@ -40,10 +40,11 @@ export function diasPorSemana(semanas, alto = 150) {
 }
 
 /**
- * Línea de progreso (kilos de la mejor serie, o peso corporal) por fecha.
+ * Línea de progreso (carga de la mejor serie, o peso corporal) por fecha.
+ * Cada punto trae su valor en p.kg; `valor` lo convierte en texto (kg, lb o placas).
  * El eje no empieza en cero: lo que importa es ver si sube o baja.
  */
-export function linea(puntos, { alto = 170, etiqueta = 'Progreso', detalle = (p) => kg(p.kg) } = {}) {
+export function linea(puntos, { alto = 170, etiqueta = 'Progreso', valor = kg, detalle = (p) => valor(p.kg) } = {}) {
   if (!puntos.length) return '';
   const arriba = 22;
   const abajo = 22;
@@ -68,7 +69,7 @@ export function linea(puntos, { alto = 170, etiqueta = 'Progreso', detalle = (p)
   // Solo se marcan con punto el primero y el último (etiquetado selectivo).
   marcas += `<circle class="p-serie" cx="${x(0)}" cy="${y(puntos[0].kg)}" r="4"/>`;
   if (n > 1) marcas += `<circle class="p-serie" cx="${x(n - 1)}" cy="${y(ultimo.kg)}" r="4"/>`;
-  marcas += `<text class="valor" x="${x(n - 1) + 9}" y="${y(ultimo.kg) + 4}">${esc(kg(ultimo.kg))}</text>`;
+  marcas += `<text class="valor" x="${x(n - 1) + 9}" y="${y(ultimo.kg) + 4}">${esc(valor(ultimo.kg))}</text>`;
   const ejes = `<text class="eje" x="${x(0)}" y="${alto - 5}" text-anchor="start">${fechaCorta(puntos[0].fecha)}</text>
     ${n > 1 ? `<text class="eje" x="${x(n - 1)}" y="${alto - 5}" text-anchor="end">${fechaCorta(ultimo.fecha)}</text>` : ''}
     <line class="base" x1="0" x2="${ANCHO}" y1="${arriba + h}" y2="${arriba + h}"/>`;
